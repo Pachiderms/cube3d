@@ -91,14 +91,8 @@ void drawRect(int x, int y, int color, int size)
     }
 }
 
-void drawLine(int color)
+void drawLine(double beginX, double beginY, double endX, double endY, int color)
 {
-    double beginX = player.x;
-    double beginY = player.y;
-
-    double endX = (player.x+player.dx*5)*3;
-    double endY = (player.y+player.dy*5)*3;
-
     double deltaX = endX - beginX;
     double deltaY = endY - beginY;
 
@@ -116,6 +110,73 @@ void drawLine(int color)
         pixelsX+=deltaX;
         pixelsY+=deltaY;
         pixels--;
+    }
+}
+
+void drawRay()
+{
+    int r;
+    int mx;
+    int my;
+    int mp;
+    int dof=0;
+    float rx;
+    float ry;
+    float ra;
+    float xo;
+    float yo;
+
+    ra = player.pa;
+    for(r=0; r<1;r++)
+    {
+        dof = 0;
+        float aTan=-1/tan(ra);
+        if (ra > M_PI) //looking down
+        {
+            ry = (((int)player.y >> 6) << 6) - 0.0001; // << multiply by 2^6=64
+            rx = (player.y - ry) * aTan + player.x;
+            yo = -64;
+            xo = -yo * aTan;
+        }
+        if (ra < M_PI) //looking up
+        {
+            ry = (((int)player.y >> 6) << 6) + 64; // << -> multiply by 2^6=64
+            rx = (player.y - ry) * aTan + player.x;
+            yo = 64;
+            xo = -yo * aTan;
+        }
+        if (ra == 0 || ra == M_PI) /// looking left or right
+        {
+            rx = player.x;
+            ry = player.y;
+            dof = 8;
+        }
+        while (dof < 8)
+        {
+            mx = (int) (rx) >> 6;
+            my = (int)(ry) >> 6;
+            mp = my * mapx + mx;
+            if (mp < mapx * mapy)
+            {
+                if (map[mp] == 1) // hit wall
+                {
+                    dof = 8;
+                }
+                else // next step adding offset on x and y
+                {
+                    rx += xo;
+                    ry += yo;
+                    dof++;
+                }
+            }
+            else // next step adding offset on x and y
+            {
+                rx += xo;
+                ry += yo;
+                dof++;
+            }
+        }
+        drawLine(player.x, player.y, rx, ry, green);
     }
 }
 
@@ -141,7 +202,7 @@ void drawMap2D()
 void render_player()
 {
     drawRect(player.x, player.y, red, 2);
-    drawLine(red);
+    drawRay();
 }
 
 int display()
