@@ -24,7 +24,7 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 	make -C $(MLX_DIR)
-	$(CC) $(OBJS) $(MLX_DIR)libmlx.a -lmlx -lXext -lX11 -L $(MLX_DIR) $(MLX_DIR)libmlx.a -lm -o $(NAME)
+	$(CC) $(OBJS) $(MLX_DIR)libmlx.a -g -lmlx -lXext -lX11 -L $(MLX_DIR) $(MLX_DIR)libmlx.a -lm -o $(NAME)
 
 clean:
 	rm -rf ./*.o

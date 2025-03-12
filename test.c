@@ -22,6 +22,8 @@
 
 # define KEY_Z				122
 # define KEY_Q				113
+# define KEY_W				119
+# define KEY_A				97
 # define KEY_S				115
 # define KEY_D				100
 
@@ -43,6 +45,15 @@
 # define green 0x0000FF00
 # define blue  0x000000FF
 # define black 000000
+
+#define PI2 M_PI/2
+# define PI3 3*M_PI/2
+# define DEG_TO_RAD 0.0174533
+
+float dist(float ax, float ay, float bx, float by, float ang)
+{
+    return (sqrt((bx-ax) * (bx-ax) + (by-ay) * (by-ay)));
+}
 
 typedef struct s_player
 {
@@ -125,22 +136,30 @@ void drawRay()
     float ra;
     float xo;
     float yo;
+    float disT;
 
-    ra = player.pa;
-    for(r=0; r<1;r++)
+    ra = -player.pa-DEG_TO_RAD*30;
+    if (ra < 0)
+        ra += 2*M_PI;
+    if (ra > 2*M_PI)
+        ra -= 2*M_PI;
+    for(r=0; r<60;r++)
     {
         dof = 0;
+        float disH=1000000;
+        float hx = player.x;
+        float hy = player.y;
         float aTan=-1/tan(ra);
         if (ra > M_PI) //looking down
         {
-            ry = (((int)player.y >> 6) << 6) - 0.0001; // << multiply by 2^6=64
+            ry = (int)player.y - 0.0001;
             rx = (player.y - ry) * aTan + player.x;
             yo = -64;
             xo = -yo * aTan;
         }
         if (ra < M_PI) //looking up
         {
-            ry = (((int)player.y >> 6) << 6) + 64; // << -> multiply by 2^6=64
+            ry = (int)player.y + 64;
             rx = (player.y - ry) * aTan + player.x;
             yo = 64;
             xo = -yo * aTan;
@@ -156,18 +175,12 @@ void drawRay()
             mx = (int) (rx) >> 6;
             my = (int)(ry) >> 6;
             mp = my * mapx + mx;
-            if (mp < mapx * mapy)
+            if (mp > 0 && mp < mapx * mapy && map[mp] == 1)
             {
-                if (map[mp] == 1) // hit wall
-                {
-                    dof = 8;
-                }
-                else // next step adding offset on x and y
-                {
-                    rx += xo;
-                    ry += yo;
-                    dof++;
-                }
+                hx = rx;
+                hy = ry;
+                disH = dist(player.x, player.y, hx, hy, ra);
+                dof = 8;
             }
             else // next step adding offset on x and y
             {
@@ -176,7 +189,80 @@ void drawRay()
                 dof++;
             }
         }
-        drawLine(player.x, player.y, rx, ry, green);
+        //drawLine(player.x, player.y, rx, ry, red);
+
+        dof = 0;
+        float disV=1000000;
+        float vx = player.x;
+        float vy = player.y;
+        float nTan=-tan(ra);
+        if (ra > PI2 && ra < PI3) //looking left
+        {
+            rx = (int)player.x - 0.0001;
+            ry = (player.x - rx) * nTan + player.y;
+            xo = -64;
+            yo = -xo * nTan;
+        }
+        if (ra > PI2 || ra < PI3) //looking right
+        {
+            rx = (int)player.x + 64;
+            ry = (player.x - rx) * nTan + player.y;
+            xo = 64;
+            yo = -xo * nTan;
+        }
+        if (ra == 0 || ra == M_PI) /// looking left or right
+        {
+            rx = player.x;
+            ry = player.y;
+            dof = 8;
+        }
+        while (dof < 8)
+        {
+            mx = (int) (rx) >> 6;
+            my = (int)(ry) >> 6;
+            mp = my * mapx + mx;
+            if (mp > 0 && mp < mapx * mapy && map[mp] == 1)
+            {
+                vx = rx;
+                vy = ry;
+                disV = dist(player.x, player.y, vx, vy, ra);
+                dof = 8;
+            }
+            else // next step adding offset on x and y
+            {
+                rx += xo;
+                ry += yo;
+                dof++;
+            }
+        }
+        if (disV < disH)
+        {
+            disT = disV;
+            rx = vx;
+            ry = vy;
+        }
+        if (disH > disV)
+        {
+            disT = disH;
+            rx = hx;
+            ry = hy;
+        }
+        //drawLine(player.x, player.y, rx, ry, green);
+        float ca = -player.pa - ra; // fisheye fix
+        if (ca < 0)
+            ca += 2*M_PI;
+        if (ca > 2*M_PI)
+            ca -= 2*M_PI;
+        float lineH = (maps*320/disT); // clalc line Height
+        if (lineH>320)
+            lineH=320;
+        float lineO = 160 - lineH/2; // calc line offset
+        drawRect(r*8+530, lineH+lineO, red, 8);
+        ra += DEG_TO_RAD;
+        if (ra < 0)
+        ra += 2*M_PI;
+        if (ra > 2*M_PI)
+            ra -= 2*M_PI;
     }
 }
 
@@ -209,6 +295,8 @@ int display()
 {
     drawMap2D();
     render_player();
+
+    return 0;
 }
 
 int keyPress(int key)
@@ -219,10 +307,10 @@ int keyPress(int key)
     }
 
     mlx_pixel_put(mlx, win, player.x, player.y, black);
-    if (key == KEY_Z){
+    if (key == KEY_W || key == KEY_Z){
         player.x-=player.dy;
         player.y-=player.dx;
-    }else if(key == KEY_Q){
+    }else if(key == KEY_D){
         player.pa-=0.1;
         if (player.pa<0)
         {
@@ -233,7 +321,7 @@ int keyPress(int key)
     }else if(key == KEY_S){
         player.x+=player.dy;
         player.y+=player.dx;
-    }else if(key == KEY_D){
+    }else if(key == KEY_Q || key == KEY_A){
         player.pa+=0.1;
         if (player.pa>2*M_PI)
         {
@@ -249,6 +337,7 @@ int main(int argc, char **argv)
 {
     player.x = 300;
     player.y = 300;
+    player.pa = PI2;
     player.dx=cos(player.pa)*5;
     player.dy=sin(player.pa)*5;
    
