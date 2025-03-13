@@ -12,11 +12,13 @@
 
 # include <unistd.h>
 # include <stdio.h>
+# include <stdlib.h>
 # include <fcntl.h>
 # include "minilibx-linux/mlx.h"
 # include <X11/X.h>
 # include <X11/keysym.h>
 # include <math.h>
+# include <time.h>
 
 //M_PI pour pi
 
@@ -45,18 +47,19 @@
 # define green 0x0000FF00
 # define blue  0x000000FF
 # define black 000000
+# define yellow 0xFFFF00
 
 #define mapWidth 24
 #define mapHeight 24
 #define screenWidth 640
 #define screenHeight 480
 
-double radToDeg(double rad) {return (rad* 180 / M_PI);}
+// double radToDeg(double rad) {return (rad* 180 / M_PI);}
 
-float dist(double rayDirX, double rayDirY)
-{
-    return (sqrt(1 + (rayDirX * rayDirX) / (rayDirY * rayDirY)));
-}
+// float dist(double rayDirX, double rayDirY)
+// {
+//     return (sqrt(1 + (rayDirX * rayDirX) / (rayDirY * rayDirY)));
+// }
 
 typedef struct s_player
 {
@@ -105,25 +108,14 @@ void *win;
 
 t_player player;
 
-void drawRect(int x, int y, int color, int size)
+void drawLine(int beginX, int beginY, int endX, int endY, int color)
 {
-    int i = 0;
-    int j;
-    while (i<mapy*size)
-    {
-        j = 0;
-        while (j<mapx*size)
-        {
-            mlx_pixel_put(mlx, win, x+j++, y+i, color);
-        }
-        i++;
-    }
-}
-
-void drawLine(double beginX, double beginY, double endX, double endY, int color)
-{
+    // printf("IN\n");
+    // printf("bX %d bY %d eX %d eY %d\n", beginX, beginY, endX, endY);
     double deltaX = endX - beginX;
     double deltaY = endY - beginY;
+
+    // printf("dX %f dY %f\n", deltaX, deltaY);
 
     double pixels = sqrt((deltaX * deltaX) + (deltaY * deltaY));
 
@@ -140,14 +132,16 @@ void drawLine(double beginX, double beginY, double endX, double endY, int color)
         pixelsY+=deltaY;
         pixels--;
     }
+    // printf("OUT\n");
 }
 
 void    raycast()
 {
-    int done = 0;
-    int w = mapWidth;
+    int w = screenWidth;
+    int h = screenHeight;
     for (int x=0; x < w; x++)
     {
+        // printf("stripe %d\n", x);
         double rx = player.posX;
         double ry = player.posY;
 
@@ -161,8 +155,9 @@ void    raycast()
         double sideDistX;
         double sideDistY;
 
-        double deltaDistX = abs(1 / rayDirX);
-        double deltaDistY = abs(1 / rayDirY);
+        double deltaDistX = sqrt(1 + (rayDirY * rayDirY) / (rayDirX * rayDirX));
+        double deltaDistY = sqrt(1 + (rayDirX * rayDirX) / (rayDirY * rayDirY));
+
         double perpWallDist;
 
         int stepX;
@@ -177,61 +172,117 @@ void    raycast()
         }
         else{
             stepX = 1;
-            sideDistX = (mapX + 1) * deltaDistX;
+            sideDistX = (mapX + 1.0) * deltaDistX;
         }
         if (rayDirY < 0){
-            sideDistX = (player.posY - mapY) * deltaDistY;
             stepY = -1;
+            sideDistX = (player.posY - mapY) * deltaDistY;
         }
         else{
             stepY = 1;
-            sideDistX = (mapY + 1) * deltaDistY;
+            sideDistY = (mapY + 1.0) * deltaDistY;
         }
 
-        while (condition)
+        while (hit == 0)
         {
-            /* code */
+            if (sideDistX < sideDistY){
+                sideDistX += deltaDistX;
+                mapX += stepX;
+                side = 0;
+            }
+            else{
+                sideDistY += deltaDistY;
+                mapY += stepY;
+                side = 1;
+            }
+            if (worldMap[mapX][mapY] > 0)
+                hit = 1;
         }
-    }    
+
+        if (side == 0)
+            perpWallDist = sideDistX - deltaDistX;
+        else
+            perpWallDist = sideDistY - deltaDistY;
+
+        if (perpWallDist == 0)
+            perpWallDist = 1;
+        printf("perp %f\n", perpWallDist);
+        int lineHeight = (int)(h / perpWallDist);
+        printf("lineHeight %d\n", lineHeight);
+        int drawStart = -lineHeight / 2 + h / 2;
+        int drawEnd = lineHeight / 2 + h / 2;
+
+        if (drawStart < 0)
+            drawStart = 0;
+        if (drawEnd >= h)
+            drawEnd = h - 1;
+
+        int color;
+        switch(worldMap[mapX][mapY])
+        {
+            case 1:  color = red;  break;
+            case 2:  color = green;  break;
+            case 3:  color = blue;   break;
+            case 4:  color = white;  break;
+            default: color = yellow; break;
+        }
+
+        // printf("reached\n");
+        drawLine(x, drawStart, x, drawEnd, color);
+    }
+
+    time_t oldTime;
+    time(&oldTime);
+    clock_t time = clock();
+
+    double frameTime = (time - oldTime) / 1000.0;
+
+    printf(GREEN"FPS %f\n"RESET, 1.0/frameTime);
+    mlx_clear_window(mlx, win);
 }
 
 int display()
 {
     raycast();
-    //render_player();
+
     return 0;
 }
 
 int keyPress(int key)
 {
+    float rotSpeed = 0.1;
     if (key == KEY_ESC){
         mlx_destroy_window(mlx, win);
         return 0;
     }
 
-    mlx_pixel_put(mlx, win, player.x, player.y, black);
     if (key == KEY_W || key == KEY_Z){
-        player.x-=player.dy;
-        player.y-=player.dx;
-    }else if(key == KEY_D){
-        player.pa-=0.1;
-        if (player.pa<0)
-        {
-            player.pa+=2*M_PI;
-        }
-        player.dx=cos(player.pa)*5;
-        player.dy=sin(player.pa)*5;
-    }else if(key == KEY_S){
-        player.x+=player.dy;
-        player.y+=player.dx;
-    }else if(key == KEY_Q || key == KEY_A){
-        player.pa+=0.1;
-        if (player.pa>2*M_PI)
-        {
-            player.pa-=2*M_PI;
-        }
-        player.dx=cos(player.pa)*5;
-        player.dy=sin(player.pa)*5;
+        if(worldMap[(int)(player.posX + player.dirX)][(int)(player.posY)] == 0) player.posX += player.dirX;
+        if(worldMap[(int)(player.posX)][(int)(player.posY + player.dirY)] == 0) player.posY += player.dirY;
+    }
+    if(key == KEY_S){
+        if(worldMap[(int)(player.posX + player.dirX)][(int)(player.posY)] == 0) player.posX -= player.dirX;
+        if(worldMap[(int)(player.posX)][(int)(player.posY + player.dirY)] == 0) player.posY -= player.dirY;
+    }
+    if (key == KEY_A || key == KEY_Q)
+        player.posX += player.dirX;
+    if (key == KEY_D)
+        player.posX -= player.dirX;
+    if(key == KEY_RIGHT){
+        double oldDirX = player.dirX;
+        player.dirX = player.dirX * cos(-rotSpeed) - player.dirY * sin(-rotSpeed);
+        player.dirY = oldDirX * sin(-rotSpeed) + player.dirY * cos(-rotSpeed);
+        double oldPlaneX = player.planeX;
+        player.planeX = player.planeX * cos(-rotSpeed) - player.planeY * sin(-rotSpeed);
+        player.planeY = oldPlaneX * sin(-rotSpeed) + player.planeY * cos(-rotSpeed);
+    }
+    if(key == KEY_LEFT){
+        double oldDirX = player.dirX;
+        player.dirX = player.dirX * cos(rotSpeed) - player.dirY * sin(rotSpeed);
+        player.dirY = oldDirX * sin(rotSpeed) + player.dirY * cos(rotSpeed);
+        double oldPlaneX = player.planeX;
+        player.planeX = player.planeX * cos(rotSpeed) - player.planeY * sin(rotSpeed);
+        player.planeY = oldPlaneX * sin(rotSpeed) + player.planeY * cos(rotSpeed);
     }
     return 0;
 }
@@ -244,7 +295,8 @@ int main(int argc, char **argv)
     player.dirY = 0;
     player.planeX = 0;
     player.planeY = 0.6;
-    player.fov = 2 * atan(player.planeY/player.dirX);
+    player.fov = (2 * atan(player.planeY/fabs(player.dirX))) * 180 / M_PI;
+    printf("fov %f\n", player.fov);
    
     mlx = mlx_init();
     win =  mlx_new_window(mlx, screenWidth, screenHeight, "test_raycasting");
