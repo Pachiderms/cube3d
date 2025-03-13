@@ -1,3 +1,5 @@
-https://www.youtube.com/watch?v=NbSee-XM7WA&list=TLPQMTMwMzIwMjWQtdfmcqdAcg&index=2
+To understand maths behind Cub3d
+  -> https://www.youtube.com/watch?v=NbSee-XM7WA&list=TLPQMTMwMzIwMjWQtdfmcqdAcg&index=2
 
-+ doc 42 -> https://lodev.org/cgtutor/raycasting.html
+Global tuto better after maths comprhension
+  -> https://lodev.org/cgtutor/raycasting.html (doc 42)
