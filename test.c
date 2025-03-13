@@ -49,17 +49,13 @@
 # define black 000000
 # define yellow 0xFFFF00
 
-#define mapWidth 24
-#define mapHeight 24
-#define screenWidth 640
-#define screenHeight 480
+# define mapWidth 24
+# define mapHeight 24
+# define screenWidth 640
+# define screenHeight 480
 
-// double radToDeg(double rad) {return (rad* 180 / M_PI);}
-
-// float dist(double rayDirX, double rayDirY)
-// {
-//     return (sqrt(1 + (rayDirX * rayDirX) / (rayDirY * rayDirY)));
-// }
+# define texWidth 64
+# define texHeight 64
 
 typedef struct s_player
 {
@@ -208,7 +204,7 @@ void    raycast()
             drawStart = 0;
         if (drawEnd >= h)
             drawEnd = h - 1;
-
+        
         int color;
         switch(worldMap[mapX][mapY])
         {
@@ -219,6 +215,8 @@ void    raycast()
             default: color = yellow; break;
         }
 
+        if (side == 0)
+            color /= 2;
         drawLine(x, drawStart, x, drawEnd, color);
     }
 
@@ -278,13 +276,11 @@ int main(int argc, char **argv)
     player.dirX = -1;
     player.dirY = 0;
     player.planeX = 0;
-    player.planeY = 0.6;
+    player.planeY = 0.66;
     player.fov = (2 * atan(player.planeY/fabs(player.dirX))) * 180 / M_PI;
-    printf("fov %f\n", player.fov);
    
     mlx = mlx_init();
     win =  mlx_new_window(mlx, screenWidth, screenHeight, "test_raycasting");
-
     
     mlx_loop_hook(mlx, display, NULL);
     mlx_hook(win, KeyPress, KeyPressMask, keyPress, NULL);
