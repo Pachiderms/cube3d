@@ -71,6 +71,7 @@ typedef struct s_player
     double fov;
 } t_player;
 
+
 int worldMap[mapWidth][mapHeight]=
 {
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -98,6 +99,18 @@ int worldMap[mapWidth][mapHeight]=
   {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
+
+// int worldMap[mapWidth][mapHeight]=
+// {
+//   {1, 1, 1, 1, 1, 1, 1, 1},
+//   {1, 0, 1, 0, 0, 0, 0, 1},
+//   {1, 0, 0, 0, 0, 1, 0, 1},
+//   {1, 0, 0, 0, 0, 1, 0, 1},
+//   {1, 0, 0, 0, 0, 0, 0, 1},
+//   {1, 0, 0, 0, 1, 1, 1, 1},
+//   {1, 1, 0, 0, 0, 0, 0, 1},
+//   {1, 1, 1, 1, 1, 1, 1, 1},
+// };
 
 void *mlx;
 void *win;
@@ -196,6 +209,7 @@ void    raycast()
 
         if (perpWallDist == 0)
             perpWallDist = 1;
+
         int lineHeight = (int)(h / perpWallDist);
         int drawStart = -lineHeight / 2 + h / 2;
         int drawEnd = lineHeight / 2 + h / 2;
@@ -204,7 +218,7 @@ void    raycast()
             drawStart = 0;
         if (drawEnd >= h)
             drawEnd = h - 1;
-        
+
         int color;
         switch(worldMap[mapX][mapY])
         {
@@ -216,7 +230,8 @@ void    raycast()
         }
 
         if (side == 0)
-            color /= 2;
+            color = color / 2;
+
         drawLine(x, drawStart, x, drawEnd, color);
     }
 
