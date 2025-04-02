@@ -158,8 +158,8 @@ void    raycast()
         double sideDistX;
         double sideDistY;
 
-        double deltaDistX = (rayDirX == 0) ? 1e30 : fabs(1 / rayDirX);
-        double deltaDistY = (rayDirY == 0) ? 1e30 : fabs(1 / rayDirY);
+        double deltaDistX = fabs(1 / rayDirX);
+        double deltaDistY = fabs(1 / rayDirY);
 
         double perpWallDist;
 
@@ -179,7 +179,7 @@ void    raycast()
         }
         if (rayDirY < 0){
             stepY = -1;
-            sideDistX = (player.posY - mapY) * deltaDistY;
+            sideDistY = (player.posY - mapY) * deltaDistY;
         }
         else{
             stepY = 1;
@@ -207,15 +207,14 @@ void    raycast()
         else
             perpWallDist = sideDistY - deltaDistY;
 
-        if (perpWallDist == 0)
-            perpWallDist = 1;
+        // if (perpWallDist == 0)
+        //     perpWallDist = 1;
 
         int lineHeight = (int)(h / perpWallDist);
         int drawStart = -lineHeight / 2 + h / 2;
-        int drawEnd = lineHeight / 2 + h / 2;
-
         if (drawStart < 0)
             drawStart = 0;
+        int drawEnd = lineHeight / 2 + h / 2;
         if (drawEnd >= h)
             drawEnd = h - 1;
 
@@ -229,7 +228,7 @@ void    raycast()
             default: color = yellow; break;
         }
 
-        if (side == 0)
+        if (side == 1)
             color = color / 2;
 
         drawLine(x, drawStart, x, drawEnd, color);
