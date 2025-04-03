@@ -100,18 +100,6 @@ int worldMap[mapWidth][mapHeight]=
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
-// int worldMap[mapWidth][mapHeight]=
-// {
-//   {1, 1, 1, 1, 1, 1, 1, 1},
-//   {1, 0, 1, 0, 0, 0, 0, 1},
-//   {1, 0, 0, 0, 0, 1, 0, 1},
-//   {1, 0, 0, 0, 0, 1, 0, 1},
-//   {1, 0, 0, 0, 0, 0, 0, 1},
-//   {1, 0, 0, 0, 1, 1, 1, 1},
-//   {1, 1, 0, 0, 0, 0, 0, 1},
-//   {1, 1, 1, 1, 1, 1, 1, 1},
-// };
-
 void *mlx;
 void *win;
 
@@ -261,9 +249,9 @@ int keyPress(int key)
         if(worldMap[(int)(player.posX)][(int)(player.posY - player.dirY)] == 0) player.posY -= player.dirY;
     }
     if (key == KEY_A || key == KEY_Q)
-        player.posX += player.dirX;
+        player.posY -= player.dirY * 1.5;
     if (key == KEY_D)
-        player.posX -= player.dirX;
+        player.posY += player.dirY * 1.5;
     if(key == KEY_RIGHT){
         double oldDirX = player.dirX;
         player.dirX = player.dirX * cos(-rotSpeed) - player.dirY * sin(-rotSpeed);
