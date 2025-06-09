@@ -1,11 +1,11 @@
-#ifndef MICROSHELL_H
-#define MICROSHELL_H
+#ifndef __MICROSHELL_H__
+# define __MICROSHELL_H__
 
 # include <unistd.h>
 # include <stdlib.h>
-# include <string.h>
 # include <sys/wait.h>
 # include <sys/types.h>
+# include <string.h>
 
 #endif
 
@@ -29,18 +29,18 @@ int ft_error(char *str)
 int exec_cd(char **av, int i)
 {
     if (i != 2)
-        return (ft_error("error: cd bad argument\n"));
+        return (ft_error("error: cd: bad arguments\n"));
     if (chdir(av[1]) == -1)
-        return (ft_error("error: cannot change path to: ") & ft_error(av[1]) & ft_error("\n"));
+        return (ft_error("error: cd: cannot change directory to ") & ft_error(av[1]) & ft_error("\n"));
     return (0);
 }
 
 int exec_cmd(char **av, int i, char **envp)
 {
-    int ret;
-    int pid;
-    int fd[2];
-    int pip = (av[i] && !strcmp(av[i], "|"));
+        int     pid;
+        int     pip = (av[i] && !strcmp(av[i], "|"));
+        int     ret;
+        int     fd[2];
 
     if (pip && pipe(fd) == -1)
         return (ft_error("error: fatal\n"));
@@ -51,9 +51,11 @@ int exec_cmd(char **av, int i, char **envp)
         if ((dup2(tmp, 0) == -1) | (close(tmp) == -1) | (pip && ((dup2(fd[1], 1) == -1) | (close(fd[0] == -1)) | (close(fd[1]) == -1))))
             return (ft_error("error: fatal\n"));
         execve(*av, av, envp);
-        return (ft_error("error: cannot execute: ") & ft_error("*av") & ft_error("\n"));
+        return (ft_error("error: cannot execute ") & ft_error(*av) & ft_error("\n"));
     }
-    if ((!pip && (dup2(0, tmp) == -1)) | (pip && ((dup2(fd[0], tmp) == -1) | (close(fd[1]) == -1) | (close(fd[0]) == -1))) | (waitpid(pid, &ret, 0) == -1))
+    if ((!pip && (dup2(0, tmp) == -1))
+            | (pip && ((dup2(fd[0], tmp) == -1) | (close(fd[1]) == -1) | (close(fd[0]) == -1)))
+            | (waitpid(pid, &ret, 0) == -1))
         return (ft_error("error: fatal\n"));
     return (WIFEXITED(ret) & WEXITSTATUS(ret));
 }
@@ -64,8 +66,11 @@ int main(int ac, char **av, char **envp)
     int i = 0;
 
     (void)ac;
-    while (av[i] && av[++i])
+    tmp = dup(0);
+    while(av[i] && av[++i])
     {
+        av = av + i;
+        i = 0;
         while (av[i] && strcmp(av[i], "|") && strcmp(av[i], ";"))
             i++;
         if (!strcmp(*av, "cd"))
@@ -73,5 +78,5 @@ int main(int ac, char **av, char **envp)
         else if (i)
             ret = exec_cmd(av, i, envp);
     }
-    return ((dup2(0, tmp) == -1) & ft_error("error: fatal\n")) | ret;
+    return ((dup2(0, tmp) == -1 && ft_error("error: fatal\n"))) | ret;
 }
